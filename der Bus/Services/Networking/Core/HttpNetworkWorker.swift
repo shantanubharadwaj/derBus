@@ -126,14 +126,15 @@ extension Http{
         
         fileprivate func removeMetaData(_ id: String) {
             DispatchQueue.global().sync { [unowned self] in
-                print("HTTPWorker[\(self.creator)]::removing meta data for: \(id)")
-                self.metaDataHolder.removeValue(forKey: id)
+                let idd = id
+//                print("HTTPWorker[\(self.creator)]::removing meta data for: \(id)")
+                self.metaDataHolder.removeValue(forKey: idd)
             }
         }
         
         fileprivate func removeAllMetaData(){
             DispatchQueue.global().sync { [unowned self] in
-                print("HTTPWorker[\(self.creator)]::removing all meta data.")
+//                print("HTTPWorker[\(self.creator)]::removing all meta data.")
                 self.metaDataHolder.removeAll()
             }
         }

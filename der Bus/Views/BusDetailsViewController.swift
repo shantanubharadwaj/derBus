@@ -19,13 +19,16 @@ class BusDetailsViewController: UIViewController {
     @IBOutlet weak var containerView: UIView!
     
     
-    var busDetailsList: BusDetailsList? {
+    var busDetailsList: [BusInfoDetails]? {
         didSet {
             self.busCountInfo.text = viewModel.busCountInfo
         }
     }
     
     var viewModel: BusListViewModel!
+    
+    var sortviewModel: SortViewModel!
+    var filterviewModel: FilterViewModel!
     
     lazy var sortLabel: UILabel = {
         let label = UILabel()
@@ -63,12 +66,35 @@ class BusDetailsViewController: UIViewController {
         return label
     }()
     
+    var optionsView: OptionsView!
+
+    let visualEffectView: UIVisualEffectView = {
+        let blurEffect = UIBlurEffect(style: .dark)
+        let view = UIVisualEffectView(effect: blurEffect)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
     @objc func handleSortTapped() {
-        print("Handle Sort Tapped")
+        optionsView = .none
+        optionsView = createOptionsModalView()
+        optionsView.optionType = .sort
+        optionsView.sortoptions = SortEngine.availableSortOptions()
+        optionsView.allowMultipleSelections = false
+        optionsView.lastSelectedSortOption = viewModel.currentlySelectedSortOption
+        showModalOptionsView()
+        print("Sort Tapped")
     }
     
     @objc func handleFilterTapped() {
-        print("Handle Filter Tapped")
+        optionsView = .none
+        optionsView = createOptionsModalView()
+        optionsView.optionType = .filter
+        optionsView.filteroptions = FilterEngine.availableFilterOptions()
+        optionsView.allowMultipleSelections = true
+        optionsView.lastSelectedFilterOptions = viewModel.currentlySelectedFilterOption
+        showModalOptionsView()
+        print("Filter Tapped")
     }
     
     override func viewDidLoad() {
@@ -94,7 +120,7 @@ extension BusDetailsViewController {
         
         navigationItem.title = viewModel.titleBarInfo
         
-        busDetailsTV.separatorStyle = .singleLine
+        busDetailsTV.separatorStyle = .none
         busDetailsTV.separatorColor = #colorLiteral(red: 0.501960814, green: 0.501960814, blue: 0.501960814, alpha: 1)
         busDetailsTV.layoutMargins = UIEdgeInsets.zero
         busDetailsTV.separatorInset = UIEdgeInsets.zero
@@ -128,6 +154,54 @@ extension BusDetailsViewController {
         guard viewModel.isAppOnline else {
             SVProgressHUD.showError(withStatus: "Device Offline !!! Please try later ")
             return
+        }
+    }
+    
+    fileprivate func createOptionsModalView() -> OptionsView {
+        let view = OptionsView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.delegate = self
+        return view
+    }
+    
+    fileprivate func showModalOptionsView() {
+        view.addSubview(visualEffectView)
+        visualEffectView.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
+        visualEffectView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        visualEffectView.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
+        visualEffectView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
+        
+        visualEffectView.alpha = 0
+        
+        view.addSubview(optionsView)
+        
+        optionsView.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
+        optionsView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        optionsView.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
+
+        optionsView.heightAnchor.constraint(equalToConstant: view.frame.height / 3).isActive = true
+ 
+        optionsView.isHidden = true
+        optionsView.alpha = 0
+        
+        UIView.animate(withDuration: 0.5, delay: 0, options: UIView.AnimationOptions.curveLinear, animations: {
+            
+            self.visualEffectView.alpha = 1
+            self.optionsView.alpha = 1
+            self.optionsView.isHidden = false
+            self.optionsView.center.y -= self.view.bounds.height
+        }, completion: nil)
+    }
+    
+    func handleOptionsDismissal() {
+        UIView.animate(withDuration: 0.5, animations: {
+            self.visualEffectView.alpha = 0
+            self.optionsView.alpha = 0
+            self.optionsView.isHidden = true
+            self.optionsView.center.y += self.view.bounds.height
+        }) { (_) in
+            self.optionsView.removeFromSuperview()
+            print("Did remove pop up window..")
         }
     }
     
@@ -165,13 +239,28 @@ extension BusDetailsViewController {
         
         viewModel.fetchedBusDetails = { [weak self] in
             DispatchQueue.main.async {
-                self?.busDetailsList = self?.viewModel.busDetailsList
+                self?.busDetailsList = self?.viewModel.busDetails
             }
         }
         
         viewModel.reloadTableViewClosure = { [weak self] in
             DispatchQueue.main.async {
+                if (self?.viewModel.numberOfCells ?? 0) > 0 {
+                    self?.busDetailsTV.separatorStyle = .singleLine
+                }
                 self?.busDetailsTV.reloadData()
+            }
+        }
+        
+        sortviewModel.sortedList = {[weak self] in
+            if let mself = self {
+                mself.viewModel.busDetails = mself.sortviewModel.busDetails
+            }
+        }
+        
+        filterviewModel.filteredList = {[weak self] in
+            if let mself = self {
+                mself.viewModel.busDetails = mself.filterviewModel.busDetails
             }
         }
     }
@@ -195,5 +284,36 @@ extension BusDetailsViewController: UITableViewDataSource, UITableViewDelegate {
         cell.layoutMargins = UIEdgeInsets.zero
         cell.viewModel = viewModel.viewModelForCell(for: indexPath)
         return cell
+    }
+}
+
+extension BusDetailsViewController: OptionsDelegate {
+    func filterOptionSelected(options: [FilterOptions]) {
+        viewModel.currentlySelectedFilterOption = options
+        if let busDetails = viewModel.rawBusDetailsList?.busDetails {
+            filterviewModel?.fetchFilteredData(for: busDetails, with: options)
+        }
+        print("Filter option seletec : \(options)")
+    }
+    
+    func sortOptionSelected(options: SortOptions) {
+        viewModel.currentlySelectedSortOption = options
+        if let busDetails = viewModel.rawBusDetailsList?.busDetails {
+            sortviewModel?.fetchSortedData(for: busDetails, with: options)
+        }
+        print("Sort option seletec : \(options)")
+    }
+    
+    func handleDismissal() {
+        UIView.animate(withDuration: 0.5, animations: {
+            self.visualEffectView.alpha = 0
+            self.optionsView.alpha = 0
+            self.optionsView.isHidden = true
+            self.optionsView.center.y += self.view.bounds.height
+        }) { (_) in
+            self.optionsView.removeFromSuperview()
+            self.visualEffectView.removeFromSuperview()
+            self.optionsView = .none
+        }
     }
 }

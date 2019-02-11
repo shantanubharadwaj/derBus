@@ -33,53 +33,46 @@ class BusInfoTVCell: UITableViewCell {
     }
     
     private func configureVM() {
-        viewModel.logoImageDownloadClosure = {[weak self] in
-            if let imageData = self?.viewModel.imageData, let image = UIImage(data: imageData) {
-                DispatchQueue.main.async {
+        viewModel.imageData.bind { [weak self] (value) in
+            if let imageData = value, let image = UIImage(data: imageData) {
+                OperationQueue.main.addOperation {
                     self?.busLogo.image = image
                 }
             }
         }
-        
-        viewModel.travelerNameClosure = {[weak self] in
-            DispatchQueue.main.async {
-                self?.travelName.text = self?.viewModel.travelerName
+        viewModel.travelerName.bind { [weak self] (value) in
+            OperationQueue.main.addOperation {
+                self?.travelName.text = value
             }
         }
-        
-        viewModel.departureTimeClosure = {[weak self] in
-            DispatchQueue.main.async {
-                self?.departureTime.text = self?.viewModel.departureTime
+        viewModel.departureTime.bind { [weak self] (value) in
+            OperationQueue.main.addOperation {
+                self?.departureTime.text = value
             }
         }
-        
-        viewModel.arrivalTimeClosure = {[weak self] in
-            DispatchQueue.main.async {
-                self?.arrivalTime.text = self?.viewModel.arrivalTime
+        viewModel.arrivalTime.bind { [weak self] (value) in
+            OperationQueue.main.addOperation {
+                self?.arrivalTime.text = value
             }
         }
-        
-        viewModel.ratingLabelClosure = {[weak self] in
-            DispatchQueue.main.async {
-                self?.ratingLabel.text = self?.viewModel.ratingLabel
+        viewModel.ratingLabel.bind { [weak self] (value) in
+            OperationQueue.main.addOperation {
+                self?.ratingLabel.text = value
             }
         }
-        
-        viewModel.ratingCountLabelClosure = {[weak self] in
-            DispatchQueue.main.async {
-                self?.ratingCountLabel.text = self?.viewModel.ratingCountLabel
+        viewModel.ratingCountLabel.bind { [weak self] (value) in
+            OperationQueue.main.addOperation {
+                self?.ratingCountLabel.text = value
             }
         }
-        
-        viewModel.featuresLabelClosure = {[weak self] in
-            DispatchQueue.main.async {
-                self?.featuresLabel.text = self?.viewModel.featuresLabel
+        viewModel.featuresLabel.bind { [weak self] (value) in
+            OperationQueue.main.addOperation {
+                self?.featuresLabel.text = value
             }
         }
-        
-        viewModel.fareLabelClosure = {[weak self] in
-            DispatchQueue.main.async {
-                self?.fareLabel.text = self?.viewModel.fareLabel
+        viewModel.fareLabel.bind { [weak self] (value) in
+            OperationQueue.main.addOperation {
+                self?.fareLabel.text = value
             }
         }
     }

@@ -60,6 +60,8 @@ class HomeViewController: UIViewController {
             let storyBoard = UIStoryboard(name: "Main", bundle: Bundle.main)
             let busDetailsViewController = storyBoard.instantiateViewController(withIdentifier: "BusDetails") as! BusDetailsViewController
             busDetailsViewController.viewModel = BusListViewModel(APIService.create(.defaultService), fromDestination: fromText, toDestination: toText)
+            busDetailsViewController.sortviewModel = SortViewModel()
+            busDetailsViewController.filterviewModel = FilterViewModel()
             navigationController?.pushViewController(busDetailsViewController, animated: true)
         }else{
             SVProgressHUD.showError(withStatus: "Select From and To destination")

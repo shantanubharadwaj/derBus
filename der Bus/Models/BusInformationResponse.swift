@@ -54,11 +54,26 @@ struct BusDetails: Decodable {
     }
 }
 
-struct BusType: Decodable {
+struct BusType: Decodable, CustomStringConvertible {
     let IsAc: Bool
     let IsNonAc: Bool
     let IsSeater: Bool
     let IsSleeper: Bool
+    
+    var description: String {
+        var features = "[ "
+        if IsAc {
+            features += "{AC} "
+        }
+        if IsSeater {
+            features += "{Seater} "
+        }
+        if IsSleeper {
+            features += "{Slepeer} "
+        }
+        features += "]"
+        return features
+    }
 }
 
 struct Rating: Decodable {

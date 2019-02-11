@@ -15,57 +15,36 @@ class BusListCellViewModel {
     init(_ apiService: APIServiceProtocol = APIService.create(.defaultService), busDetails: BusInfoDetails) {
         self.apiService = apiService
         self.busDetails = busDetails
-    }
-    
-    var imageData: Data? {
-        didSet {
-            self.logoImageDownloadClosure?()
+        
+        imageData = Dynamic(nil)
+        travelerName = Dynamic(busDetails.travelerName)
+        departureTime = Dynamic(DateFormatter.iso8601_24HTime.string(from: busDetails.departureTime))
+        arrivalTime = Dynamic("")
+        if let arrivetime = busDetails.arrivalTime {
+            arrivalTime.value = DateFormatter.iso8601_24HTime.string(from: arrivetime)
         }
-    }
-    
-    var travelerName: String = "" {
-        didSet {
-            self.travelerNameClosure?()
+
+        ratingLabel = Dynamic("")
+        ratingCountLabel = Dynamic("")
+        if busDetails.rating > 0 , busDetails.totalRatingCount > 0 {
+            ratingLabel.value = "★ \(String(busDetails.rating))"
+            ratingCountLabel.value = "\(String(busDetails.totalRatingCount)) ratings"
         }
+        featuresLabel = Dynamic(busDetails.busType.description)
+        fareLabel = Dynamic("\(busDetails.currency) \(String(busDetails.busFare))")
+        initService()
+        fetchLogo()
     }
     
-    var departureTime: String = "" {
-        didSet {
-            self.departureTimeClosure?()
-        }
-    }
-    
-    var arrivalTime: String = "" {
-        didSet {
-            self.arrivalTimeClosure?()
-        }
-    }
-    
-    var ratingLabel: String = "" {
-        didSet {
-            self.ratingLabelClosure?()
-        }
-    }
-    
-    var ratingCountLabel: String = "" {
-        didSet {
-            self.ratingCountLabelClosure?()
-        }
-    }
-    
-    var featuresLabel: String = "" {
-        didSet {
-            self.featuresLabelClosure?()
-        }
-    }
-    
-    var fareLabel: String = "" {
-        didSet {
-            self.fareLabelClosure?()
-        }
-    }
-    
-    var logoImageDownloadClosure: (()->())?
+    let imageData: Dynamic<Data?>
+    let travelerName: Dynamic<String>
+    let departureTime: Dynamic<String>
+    let arrivalTime: Dynamic<String>
+    let ratingLabel: Dynamic<String>
+    let ratingCountLabel: Dynamic<String>
+    let featuresLabel: Dynamic<String>
+    let fareLabel: Dynamic<String>
+
     var travelerNameClosure: (()->())?
     var departureTimeClosure: (()->())?
     var arrivalTimeClosure: (()->())?
@@ -73,24 +52,39 @@ class BusListCellViewModel {
     var ratingCountLabelClosure: (()->())?
     var featuresLabelClosure: (()->())?
     var fareLabelClosure: (()->())?
+    var logoImageDownloadClosure: (()->())?
+    var imageLoadUpdateLoadingStatus: (()->())?
     
-    init(_ busDetails: BusInfoDetails) {
-        travelerName = busDetails.travelerName
-        departureTime = DateFormatter.iso8601_24HTime.string(from: busDetails.departureTime)
-        
-        if let arrivetime = busDetails.arrivalTime {
-            arrivalTime = DateFormatter.iso8601_24HTime.string(from: arrivetime)
+    lazy var httpService: HttpService = {
+        return HttpService(apiService: apiService)
+    }()
+    
+    var isLoading: Bool = false {
+        didSet {
+            self.imageLoadUpdateLoadingStatus?()
         }
-        
-        
     }
     
-    private func initService() {
+    func initService() {
+        httpService.updateLoadingStatus = { [weak self] in
+            self?.isLoading = self?.httpService.isLoading ?? false
+        }
         
+        httpService.downloadedImageClosure = { [weak self] in
+            if let imageData = self?.httpService.downloadedImage {
+                self?.processImageData(imageData)
+            }
+        }
     }
     
     private func fetchLogo() {
-        
+        let completeURL = busDetails.logoBaseURL.absoluteString + busDetails.imageEndPoint
+        guard let url = URL(string: completeURL) else { return }
+        httpService.fetchImage(url)
+    }
+    
+    func processImageData(_ imageData: Data ) {
+        self.imageData.value = imageData
     }
     
     private func cancelLogRequest() {

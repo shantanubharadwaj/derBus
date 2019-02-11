@@ -20,14 +20,14 @@ class HomeScreenViewModel {
     var fromDestinationList: [String]? {
         guard let detailslist = busDetailsList?.busDetails else { return nil }
         var list = Set<String>(detailslist.map{ $0.source })
-        list.insert("")
+        list.insert(" ")
         return list.sorted()
     }
     
     var toDestinationList: [String]? {
         guard let detailslist = busDetailsList?.busDetails else { return nil }
         var list = Set<String>(detailslist.map{ $0.destination })
-        list.insert("")
+        list.insert(" ")
         return list.sorted()
     }
     

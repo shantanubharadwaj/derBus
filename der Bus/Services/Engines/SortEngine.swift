@@ -15,9 +15,30 @@ enum SortOptions {
     case DepartureTime_HighLow
     case Fare_LowHigh
     case Fare_HighLow
+    
+    func get() -> String {
+        switch self {
+        case .Rating_LowHigh:
+            return "Rating: Low to High"
+        case .Rating_HighLow:
+            return "Rating: High to Low"
+        case .DepartureTime_LowHigh:
+            return "Departure Time: Low to High"
+        case .DepartureTime_HighLow:
+            return "Departure Time: High to Low"
+        case .Fare_LowHigh:
+            return "Fare: Low to High"
+        case .Fare_HighLow:
+            return "Fare: High to Low"
+        }
+    }
 }
 
 struct SortEngine {
+    static func availableSortOptions() -> [SortOptions] {
+        return [SortOptions.Rating_HighLow, SortOptions.Rating_LowHigh, SortOptions.DepartureTime_HighLow, SortOptions.DepartureTime_LowHigh, SortOptions.Fare_HighLow, SortOptions.Fare_LowHigh]
+    }
+    
     static func sort(busList list: [BusInfoDetails], with options: SortOptions) -> [BusInfoDetails] {
         
         return sort(list: list, options: options)

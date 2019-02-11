@@ -13,17 +13,18 @@ class BusListViewModel {
     private var _fromDestination: String!
     private var _toDestination: String!
     
-    var busDetailsList: BusDetailsList?{
-        didSet {
-            self.fetchedBusDetails?()
-        }
-    }
+    var rawBusDetailsList: BusDetailsList?
     
     var busCountInfo: String = ""
     var titleBarInfo: String = ""
     
+    var currentlySelectedSortOption: SortOptions?
+    var currentlySelectedFilterOption: [FilterOptions]?
+    
     var busDetails: [BusInfoDetails] = [BusInfoDetails]() {
         didSet {
+            self.busCountInfo = "\(self.busDetails.count) buses found from \(self._fromDestination!) to \(self._toDestination!)"
+            self.fetchedBusDetails?()
             self.reloadTableViewClosure?()
         }
     }
@@ -61,7 +62,7 @@ class BusListViewModel {
     }
     
     func viewModelForCell(for indexPath: IndexPath ) -> BusListCellViewModel {
-        return BusListCellViewModel(busDetails: busDetails[0])
+        return BusListCellViewModel(APIService.create(.defaultService), busDetails: busDetails[indexPath.row])
     }
 
     var showAlertClosure: (()->())?
@@ -86,7 +87,7 @@ class BusListViewModel {
             if let response = self?.httpService.fetchedBusDetails, response.result == true, let details = response.busDetails {
                 self?.processFetchedBusDetails(details)
             }else{
-                self?.busDetailsList = nil
+                self?.rawBusDetailsList = nil
                 self?.alertMessage = "Failed to fetch response"
             }
         }
@@ -98,9 +99,10 @@ class BusListViewModel {
     }
     
     func processFetchedBusDetails(_ details: BusDetailsList ) {
-        self.busDetailsList = details
-        self.busDetails = details.busDetails
-        busCountInfo = "\(details.busDetails.count) buses found from \(_fromDestination!) to \(_toDestination!)"
+        self.rawBusDetailsList = details
+        self.busDetails = details.busDetails.filter({ (busInfo) -> Bool in
+            return busInfo.source == _fromDestination && busInfo.destination == _toDestination
+        })
     }
     
     var isAppOnline: Bool {

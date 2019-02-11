@@ -29,11 +29,29 @@ enum FilterOptions {
             return FilterEngine.FilterAttributes.NONE
         }
     }
+    
+    func getDescription() -> String {
+        switch self {
+        case .AC:
+            return "AC"
+        case .NONAC:
+            return "NON AC"
+        case .SLEEPER:
+            return "SLEEPER"
+        case .SEATER:
+            return "SEATER"
+        default:
+            return ""
+        }
+    }
 }
 
 struct FilterEngine {
+    static func availableFilterOptions() -> [FilterOptions] {
+        return [FilterOptions.AC, FilterOptions.NONAC, FilterOptions.SLEEPER, FilterOptions.SEATER]
+    }
     
-    internal struct FilterAttributes: OptionSet, CustomStringConvertible {
+    internal struct FilterAttributes: OptionSet, Hashable, CustomStringConvertible {
         let rawValue: UInt
         
         static let NONE     = FilterAttributes(rawValue: 1 << 0)
@@ -41,6 +59,7 @@ struct FilterEngine {
         static let NONAC    = FilterAttributes(rawValue: 1 << 2)
         static let SLEEPER  = FilterAttributes(rawValue: 1 << 3)
         static let SEATER   = FilterAttributes(rawValue: 1 << 4)
+        static let ALL: FilterAttributes = [FilterAttributes.AC, .NONAC, .SEATER, .SLEEPER]
         
         private static var optionSelected = ""
         var description: String {
@@ -131,7 +150,8 @@ struct FilterEngine {
                 $0.busType.IsSleeper ||
                 $0.busType.IsSeater
             }
-        case [.AC , .NONAC, .SLEEPER, .SEATER]:
+        case [.AC , .NONAC, .SLEEPER, .SEATER]:fallthrough
+        case .ALL:
             return list.filter{
                 $0.busType.IsAc ||
                 $0.busType.IsNonAc ||

@@ -10,4 +10,18 @@ import Foundation
 
 class SortViewModel {
     
+    init() {
+    }
+    
+    var busDetails: [BusInfoDetails] = [BusInfoDetails]() {
+        didSet {
+            self.sortedList?()
+        }
+    }
+    
+    var sortedList: (()->())?
+    
+    func fetchSortedData(for busList: [BusInfoDetails], with option: SortOptions) {
+        busDetails = SortEngine.sort(busList: busList, with: option)
+    }
 }
